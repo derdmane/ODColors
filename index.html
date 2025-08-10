@@ -5,7 +5,6 @@
     <title>OD Colors</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
-      /* minimal base so layout looks nice even before JS runs */
       html,
       body {
         height: 100%;
@@ -13,37 +12,47 @@
         font-family: Inter, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
         color: #ededed;
         background: #000;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        display: block;
+      }
+      .page,
+      .container {
+        z-index: 2;
+        position: relative;
       }
       .page {
-        position: relative;
         min-height: 100%;
         display: flex;
         align-items: flex-start;
         justify-content: center;
         padding: 48px;
         box-sizing: border-box;
-        gap: 24px;
       }
       .container {
         width: 960px;
         max-width: calc(100% - 64px);
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(0, 0, 0, 0.4);
         border-radius: 16px;
         padding: 20px;
         box-sizing: border-box;
-        backdrop-filter: blur(6px);
+        backdrop-filter: blur(8px);
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
       }
       h1 {
-        margin: 0 0 12px 0;
+        margin: 0 0 12px;
         font-size: 22px;
-        letter-spacing: 0.2px;
         color: #f6f6f6;
       }
       p {
-        margin: 0 0 18px 0;
+        margin: 0 0 18px;
         color: #cfd6dd;
         font-size: 14px;
       }
@@ -56,7 +65,6 @@
       summary {
         list-style: none;
         cursor: pointer;
-        outline: none;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -95,57 +103,26 @@
         font-weight: 700;
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       }
-      .msg {
-        font-size: 13px;
-        margin-left: 12px;
-        opacity: 0.9;
-      }
-      .note {
-        font-size: 12px;
-        color: #bfc8cf;
-        margin-top: 10px;
-      }
       .footer {
         margin-top: 16px;
         font-size: 12px;
         color: #bfc8cf;
         text-align: right;
       }
-      canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        display: block;
-      }
-      /* content should sit above canvas */
-      .page,
-      .container {
-        z-index: 2;
-        position: relative;
-      }
     </style>
   </head>
   <body>
     <canvas id="starCanvas"></canvas>
     <div class="page">
-      <div class="container" id="app">
+      <div class="container">
         <h1>Orion Drift Colors</h1>
-        <p>
-          click any color to copy that hex code to clipboard, the items expand
-          to show each color set
-        </p>
-
+        <p>click any color to copy that hex code to the clipboard.</p>
         <div id="listRoot"></div>
-
       </div>
     </div>
 
     <script>
       (function () {
-        // data
         const colorSets = [
           ["Boot Up Basic", "#808080", "#BCBCBC", "#BCBCBC", "#00FFFD"],
           ["Relay Red", "#FF0000", "#680000", "#680000", "#00FFFE"],
@@ -182,20 +159,16 @@
           ["Tri Hard", "#B7D619", "#7014F9", "#7014F9", "#00FFFE"],
           ["Crownlink", "#4E1F49", "#EF1E6C", "#EF1E6C", "#00FFFE"],
         ];
-
-        // helper to create elements
+        const listRoot = document.getElementById("listRoot");
         function e(tag, props, children) {
           const el = document.createElement(tag);
           if (props) {
             for (const k in props) {
-              if (k === "style") {
-                Object.assign(el.style, props.style);
-              } else if (k === "on") {
+              if (k === "style") Object.assign(el.style, props.style);
+              else if (k === "on")
                 for (const ev in props.on)
                   el.addEventListener(ev, props.on[ev]);
-              } else {
-                el.setAttribute(k, props[k]);
-              }
+              else el.setAttribute(k, props[k]);
             }
           }
           if (children) {
@@ -214,149 +187,125 @@
           }
           return el;
         }
-
-        const listRoot = document.getElementById("listRoot");
-
         colorSets.forEach((set) => {
-          const name = set[0];
-          const hexes = set.slice(1);
-
+          const name = set[0],
+            hexes = set.slice(1);
           const details = e("details");
           const summary = e("summary");
-
           const nameRow = e("div", { class: "nameRow" });
-          const nameText = e("div", { class: "nameText" }, name);
-          const hint = e("div", { class: "msg" }, "click to expand");
-          nameRow.appendChild(nameText);
-          nameRow.appendChild(hint);
-
+          nameRow.appendChild(e("div", { class: "nameText" }, name));
           const rightNote = e("div", { class: "hexNote" }, hexes[0]);
-
           summary.appendChild(nameRow);
           summary.appendChild(rightNote);
-
           const swatchRow = e("div", { class: "swatchRow" });
-
           hexes.forEach((hex) => {
             const sw = e("div", { class: "swatch" });
             sw.style.backgroundColor = hex;
-            // choose readable text color based on brightness
             const c = hex.replace("#", "");
-            const r = parseInt(c.substr(0, 2), 16);
-            const g = parseInt(c.substr(2, 2), 16);
-            const b = parseInt(c.substr(4, 2), 16);
-            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-            sw.style.color = luminance > 170 ? "#000" : "#fff";
+            const r = parseInt(c.substr(0, 2), 16),
+              g = parseInt(c.substr(2, 2), 16),
+              b = parseInt(c.substr(4, 2), 16);
+            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            sw.style.color = lum > 170 ? "#000" : "#fff";
             sw.textContent = hex;
             sw.title = "click to copy";
-            sw.addEventListener("click", async function () {
-              try {
-                await navigator.clipboard.writeText(hex);
-                const prior = sw.textContent;
-                sw.textContent = "copied";
-                setTimeout(() => (sw.textContent = prior), 900);
-              } catch (e) {
-                // fallback
-                const inp = document.createElement("input");
-                document.body.appendChild(inp);
-                inp.value = hex;
-                inp.select();
-                document.execCommand("copy");
-                document.body.removeChild(inp);
-                const prior = sw.textContent;
-                sw.textContent = "copied";
-                setTimeout(() => (sw.textContent = prior), 900);
-              }
+            sw.addEventListener("click", async () => {
+              await navigator.clipboard.writeText(hex);
+              const prior = sw.textContent;
+              sw.textContent = "copied";
+              setTimeout(() => (sw.textContent = prior), 900);
             });
             swatchRow.appendChild(sw);
           });
-
           details.appendChild(summary);
           details.appendChild(swatchRow);
           listRoot.appendChild(details);
         });
 
-        // star canvas
+        // mesmerizing background
         const canvas = document.getElementById("starCanvas");
         const ctx = canvas.getContext("2d");
-        let w = 0;
-        let h = 0;
-        let stars = [];
-
+        let w,
+          h,
+          stars = [],
+          nebula = [];
         function resize() {
-          const dpr = Math.max(1, window.devicePixelRatio || 1);
-          w = Math.ceil(window.innerWidth);
-          h = Math.ceil(window.innerHeight);
-          canvas.width = Math.ceil(w * dpr);
-          canvas.height = Math.ceil(h * dpr);
-          canvas.style.width = w + "px";
-          canvas.style.height = h + "px";
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          w = window.innerWidth;
+          h = window.innerHeight;
+          canvas.width = w;
+          canvas.height = h;
           initStars();
+          initNebula();
         }
-
         function initStars() {
           stars = [];
-          const count = Math.round((w * h) / 9000) + 120;
-          for (let i = 0; i < count; i++) {
-            stars.push({
+          const layers = 3;
+          for (let l = 0; l < layers; l++) {
+            const count = 100 + l * 60;
+            for (let i = 0; i < count; i++) {
+              stars.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                r: Math.random() * 1.5 + l * 0.3,
+                alpha: Math.random() * 0.8 + 0.2,
+                tw: Math.random() * 0.02,
+                phase: Math.random() * Math.PI * 2,
+                speed: 0.05 + l * 0.03,
+              });
+            }
+          }
+        }
+        function initNebula() {
+          nebula = [];
+          const colors = ["#5500ff", "#ff0077", "#00ffaa", "#ff6600"];
+          for (let i = 0; i < 5; i++) {
+            nebula.push({
               x: Math.random() * w,
               y: Math.random() * h,
-              r: Math.random() * 1.8 + 0.3,
-              alpha: Math.random() * 0.9 + 0.1,
-              tw: Math.random() * 0.02 + 0.001,
-              phase: Math.random() * Math.PI * 2,
+              r: 300 + Math.random() * 500,
+              color: colors[Math.floor(Math.random() * colors.length)],
+              dx: (Math.random() - 0.5) * 0.2,
+              dy: (Math.random() - 0.5) * 0.2,
             });
           }
         }
-
-        let last = performance.now();
-        function frame(now) {
-          const dt = Math.min(60, now - last) / 1000;
-          last = now;
-          // clear
+        function frame() {
           ctx.clearRect(0, 0, w, h);
-          // soft glow background nebula using radial gradients drawn via many circles
-          for (let i = 0; i < 4; i++) {
-            const gx = (i + 1) * 0.23 * w;
-            const gy = (i % 2) * 0.6 * h;
-            const rad = Math.max(w, h) * (0.4 + i * 0.08);
-            const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, rad);
-            g.addColorStop(0, "rgba(12,18,28,0.14)");
-            g.addColorStop(0.5, "rgba(6,12,20,0.08)");
-            g.addColorStop(1, "rgba(0,0,0,0)");
+          // nebula glow
+          nebula.forEach((n) => {
+            const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+            g.addColorStop(0, n.color + "22");
+            g.addColorStop(0.6, n.color + "08");
+            g.addColorStop(1, "transparent");
             ctx.fillStyle = g;
             ctx.beginPath();
-            ctx.rect(0, 0, w, h);
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
             ctx.fill();
-          }
-
+            n.x += n.dx;
+            n.y += n.dy;
+            if (n.x < -n.r) n.x = w + n.r;
+            if (n.x > w + n.r) n.x = -n.r;
+            if (n.y < -n.r) n.y = h + n.r;
+            if (n.y > h + n.r) n.y = -n.r;
+          });
           // stars
-          for (const s of stars) {
-            s.phase += s.tw * dt * 60;
-            const alpha = 0.5 + 0.5 * Math.sin(s.phase);
-            ctx.beginPath();
-            ctx.globalAlpha = s.alpha * alpha;
+          stars.forEach((s) => {
+            s.phase += s.tw;
+            const alpha = s.alpha * (0.5 + 0.5 * Math.sin(s.phase * 6));
+            ctx.globalAlpha = alpha;
             ctx.fillStyle = "white";
+            ctx.beginPath();
             ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
             ctx.fill();
-          }
-          ctx.globalAlpha = 1;
+            ctx.globalAlpha = 1;
+            s.x -= s.speed;
+            if (s.x < 0) s.x = w;
+          });
           requestAnimationFrame(frame);
         }
-
         window.addEventListener("resize", resize);
         resize();
-        requestAnimationFrame(frame);
-
-        // small keyboard shortcut to copy first color of the first set for demo
-        window.addEventListener("keydown", function (e) {
-          if (e.key === "c" && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            navigator.clipboard &&
-              navigator.clipboard.writeText(colorSets[0][1]);
-          }
-        });
+        frame();
       })();
     </script>
   </body>
