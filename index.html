@@ -1,377 +1,352 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Color Presets Dropdown</title>
+    <meta charset="utf-8" />
+    <title>Color roster</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
+      /* minimal base so layout looks nice even before JS runs */
+      html,
       body {
-        font-family: Arial, sans-serif;
-        background: #121212;
-        color: #eee;
+        height: 100%;
+        margin: 0;
+        font-family: Inter, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
+        color: #ededed;
+        background: #000;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .page {
+        position: relative;
+        min-height: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 48px;
+        box-sizing: border-box;
+        gap: 24px;
+      }
+      .container {
+        width: 960px;
+        max-width: calc(100% - 64px);
+        background: rgba(0, 0, 0, 0.45);
+        border-radius: 16px;
         padding: 20px;
-        max-width: 600px;
-        margin: auto;
+        box-sizing: border-box;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      }
+      h1 {
+        margin: 0 0 12px 0;
+        font-size: 22px;
+        letter-spacing: 0.2px;
+        color: #f6f6f6;
+      }
+      p {
+        margin: 0 0 18px 0;
+        color: #cfd6dd;
+        font-size: 14px;
       }
       details {
-        margin-bottom: 15px;
-        background: #222;
-        border-radius: 6px;
-        box-shadow: 0 0 6px #0008;
-        padding: 10px 15px;
+        margin: 8px 0;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 12px;
+        border-radius: 10px;
       }
       summary {
+        list-style: none;
         cursor: pointer;
-        font-weight: bold;
-        font-size: 1.1em;
         outline: none;
-      }
-      .color-group {
-        display: inline-flex;
-        flex-direction: column;
+        display: flex;
         align-items: center;
-        margin-right: 15px;
-        margin-bottom: 12px;
+        justify-content: space-between;
+        gap: 12px;
       }
-      .color-swatch {
-        width: 70px;
-        height: 70px;
-        border-radius: 6px;
-        border: 2px solid #444;
-        box-sizing: border-box;
-        position: relative;
+      .nameRow {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex: 1;
+      }
+      .nameText {
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .hexNote {
+        font-size: 12px;
+        color: #d0d7df;
+      }
+      .swatchRow {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .swatch {
+        width: 84px;
+        height: 54px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
         user-select: none;
-        transition: box-shadow 0.2s ease;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       }
-      .color-swatch:hover {
-        box-shadow: 0 0 8px 2px #fff8;
+      .msg {
+        font-size: 13px;
+        margin-left: 12px;
+        opacity: 0.9;
       }
-      .color-swatch::after {
-        content: attr(data-hex);
-        position: absolute;
-        bottom: 110%;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 4px 8px;
-        background: #333;
-        border-radius: 4px;
-        white-space: nowrap;
-        font-size: 0.85em;
-        color: #fff;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s ease;
+      .note {
+        font-size: 12px;
+        color: #bfc8cf;
+        margin-top: 10px;
       }
-      .color-swatch:hover::after {
-        opacity: 0.95;
+      .footer {
+        margin-top: 16px;
+        font-size: 12px;
+        color: #bfc8cf;
+        text-align: right;
       }
-      .color-swatch.copied::after {
-        content: "Copied!";
-        opacity: 0.95 !important;
-        background: #4caf50;
-        color: #fff;
-        font-weight: bold;
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        display: block;
       }
-      .color-label {
-        font-size: 0.9em;
-        color: #bbb;
-        text-align: center;
-        margin-top: 6px;
-        user-select: none;
-        width: 70px;
-        word-break: break-word;
+      /* content should sit above canvas */
+      .page,
+      .container {
+        z-index: 2;
+        position: relative;
       }
     </style>
   </head>
   <body>
-    <h1>Color Preset Groups</h1>
+    <canvas id="starCanvas"></canvas>
+    <div class="page">
+      <div class="container" id="app">
+        <h1>Orion Drift Colors</h1>
+        <p>
+          click any color to copy that hex code to clipboard, the items expand
+          to show each color set
+        </p>
+
+        <div id="listRoot"></div>
+
+        <div class="footer">made with care</div>
+      </div>
+    </div>
 
     <script>
-      const fullPresets = [
-        /* Full presets array from previous message */
-        {
-          name: "ColorPresetDefault (Boot Up Basic)",
-          colors: {
-            PrimaryColor: "#808080",
-            SecondaryColor: "#BCBCBC",
-            TertiaryColor: "#BCBCBC",
-            EmissiveColor: "#00FFFD",
-          },
-        },
-        {
-          name: "ColorPreset01 (Relay Red)",
-          colors: {
-            PrimaryColor: "#FF0000",
-            SecondaryColor: "#680000",
-            TertiaryColor: "#680000",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset02 (Gravity Green)",
-          colors: {
-            PrimaryColor: "#00DD00",
-            SecondaryColor: "#006500",
-            TertiaryColor: "#006500",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset03 (Binary Blue)",
-          colors: {
-            PrimaryColor: "#0055FF",
-            SecondaryColor: "#002560",
-            TertiaryColor: "#002560",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset04 (Wattage White)",
-          colors: {
-            PrimaryColor: "#E8E8E8",
-            SecondaryColor: "#6F7889",
-            TertiaryColor: "#6F7889",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset05 (Yaw Yellow)",
-          colors: {
-            PrimaryColor: "#FFCE00",
-            SecondaryColor: "#BF7A00",
-            TertiaryColor: "#BF7A00",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset06 (Polarity Purple)",
-          colors: {
-            PrimaryColor: "#8800FF",
-            SecondaryColor: "#4100A7",
-            TertiaryColor: "#4200A7",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset07 (Optical Orange)",
-          colors: {
-            PrimaryColor: "#FF7F00",
-            SecondaryColor: "#8B3E00",
-            TertiaryColor: "#8B3E00",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset08 (Rust Runners)",
-          colors: {
-            PrimaryColor: "#E88D37",
-            SecondaryColor: "#65222A",
-            TertiaryColor: "#65222A",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset09 (Ceres Cobs)",
-          colors: {
-            PrimaryColor: "#468910",
-            SecondaryColor: "#FED836",
-            TertiaryColor: "#FED836",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset10 (Circuit Samurais)",
-          colors: {
-            PrimaryColor: "#1A9599",
-            SecondaryColor: "#EC4605",
-            TertiaryColor: "#EC4605",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset11 (Pixel Punks)",
-          colors: {
-            PrimaryColor: "#FE29E1",
-            SecondaryColor: "#FFDB13",
-            TertiaryColor: "#FFDB13",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset12 (Ironclad Predators)",
-          colors: {
-            PrimaryColor: "#E52C2F",
-            SecondaryColor: "#849099",
-            TertiaryColor: "#849099",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset13 (Excelsior)",
-          colors: {
-            PrimaryColor: "#3A2986",
-            SecondaryColor: "#6EEDFF",
-            TertiaryColor: "#6EEDFF",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset14 (Camo)",
-          colors: {
-            PrimaryColor: "#456D00",
-            SecondaryColor: "#868900",
-            TertiaryColor: "#868900",
-            EmissiveColor: "#00FFFD",
-          },
-        },
-        {
-          name: "ColorPreset15 (Flames)",
-          colors: {
-            PrimaryColor: "#ED1B1B",
-            SecondaryColor: "#FFD62C",
-            TertiaryColor: "#FFD62C",
-            EmissiveColor: "#00FFFD",
-          },
-        },
-        {
-          name: "ColorPreset16 (Tiger)",
-          colors: {
-            PrimaryColor: "#EF6018",
-            SecondaryColor: "#262424",
-            TertiaryColor: "#262424",
-            EmissiveColor: "#00FFFD",
-          },
-        },
-        {
-          name: "ColorPreset17 (Club Complete)",
-          colors: {
-            PrimaryColor: "#35CCF0",
-            SecondaryColor: "#0B8843",
-            TertiaryColor: "#0B8843",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset18 (Secret Corn)",
-          colors: {
-            PrimaryColor: "#F1B737",
-            SecondaryColor: "#3E824A",
-            TertiaryColor: "#3E824A",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPreset19 (Breakaway Color)",
-          colors: {
-            PrimaryColor: "#F82782",
-            SecondaryColor: "#FEBA31",
-            TertiaryColor: "#FEBA31",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPresetSunBurst (Sunny Day)",
-          colors: {
-            PrimaryColor: "#EDA63A",
-            SecondaryColor: "#E75A38",
-            TertiaryColor: "#E75A38",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPresetQuantumCleats (Fresh Turf)",
-          colors: {
-            PrimaryColor: "#508BE7",
-            SecondaryColor: "#89BC63",
-            TertiaryColor: "#89BC63",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPresetLightning",
-          colors: {
-            PrimaryColor: "#104552",
-            SecondaryColor: "#D6FC4F",
-            TertiaryColor: "#D6FC4F",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPresetSparkle",
-          colors: {
-            PrimaryColor: "#0A63AD",
-            SecondaryColor: "#D7E7AF",
-            TertiaryColor: "#D7E7AE",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPresetButter",
-          colors: {
-            PrimaryColor: "#FFF448",
-            SecondaryColor: "#B48604",
-            TertiaryColor: "#B48604",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-        {
-          name: "ColorPresetCircuit",
-          colors: {
-            PrimaryColor: "#6758C2",
-            SecondaryColor: "#AAA9DE",
-            TertiaryColor: "#AAA9DE",
-            EmissiveColor: "#00FFFE",
-          },
-        },
-      ];
+      (function () {
+        // data
+        const colorSets = [
+          ["Boot Up Basic", "#808080", "#BCBCBC", "#BCBCBC", "#00FFFD"],
+          ["Relay Red", "#FF0000", "#680000", "#680000", "#00FFFE"],
+          ["Gravity Green", "#00DD00", "#006500", "#006500", "#00FFFE"],
+          ["Binary Blue", "#0055FF", "#002560", "#002560", "#00FFFE"],
+          ["Wattage White", "#E8E8E8", "#6F7889", "#6F7889", "#00FFFE"],
+          ["Yaw Yellow", "#FFCE00", "#BF7A00", "#BF7A00", "#00FFFE"],
+          ["Polarity Purple", "#8800FF", "#4100A7", "#4200A7", "#00FFFE"],
+          ["Optical Orange", "#FF7F00", "#8B3E00", "#8B3E00", "#00FFFE"],
+          ["Rust Runners", "#E88D37", "#65222A", "#65222A", "#00FFFE"],
+          ["Ceres Cobs", "#468910", "#FED836", "#FED836", "#00FFFE"],
+          ["Circuit Samurais", "#1A9599", "#EC4605", "#EC4605", "#00FFFE"],
+          ["Pixel Punks", "#FE29E1", "#FFDB13", "#FFDB13", "#00FFFE"],
+          ["Ironclad Predators", "#E52C2F", "#849099", "#849099", "#00FFFE"],
+          ["Excelsior", "#3A2986", "#6EEDFF", "#6EEDFF", "#00FFFE"],
+          ["Camo", "#456D00", "#868900", "#868900", "#00FFFD"],
+          ["Flames", "#ED1B1B", "#FFD62C", "#FFD62C", "#00FFFD"],
+          ["Tiger", "#EF6018", "#262424", "#262424", "#00FFFD"],
+          ["Club Complete", "#35CCF0", "#0B8843", "#0B8843", "#00FFFE"],
+          ["Secret Corn", "#F1B737", "#3E824A", "#3E824A", "#00FFFE"],
+          ["Breakaway Color", "#F82782", "#FEBA31", "#FEBA31", "#00FFFE"],
+          ["Color Sunny Day", "#EDA63A", "#E75A38", "#E75A38", "#00FFFE"],
+          ["Color Fresh Turf", "#508BE7", "#89BC63", "#89BC63", "#00FFFE"],
+        ];
 
-      const container = document.createElement("div");
+        // helper to create elements
+        function e(tag, props, children) {
+          const el = document.createElement(tag);
+          if (props) {
+            for (const k in props) {
+              if (k === "style") {
+                Object.assign(el.style, props.style);
+              } else if (k === "on") {
+                for (const ev in props.on)
+                  el.addEventListener(ev, props.on[ev]);
+              } else {
+                el.setAttribute(k, props[k]);
+              }
+            }
+          }
+          if (children) {
+            if (Array.isArray(children))
+              children.forEach((c) =>
+                el.appendChild(
+                  typeof c === "string" ? document.createTextNode(c) : c
+                )
+              );
+            else
+              el.appendChild(
+                typeof children === "string"
+                  ? document.createTextNode(children)
+                  : children
+              );
+          }
+          return el;
+        }
 
-      fullPresets.forEach((preset) => {
-        const details = document.createElement("details");
-        const summary = document.createElement("summary");
-        summary.textContent = preset.name;
-        details.appendChild(summary);
+        const listRoot = document.getElementById("listRoot");
 
-        const colorsWrapper = document.createElement("div");
-        colorsWrapper.style.display = "flex";
-        colorsWrapper.style.flexWrap = "wrap";
-        colorsWrapper.style.marginTop = "10px";
+        colorSets.forEach((set) => {
+          const name = set[0];
+          const hexes = set.slice(1);
 
-        Object.entries(preset.colors).forEach(([label, hex]) => {
-          const colorGroup = document.createElement("div");
-          colorGroup.className = "color-group";
+          const details = e("details");
+          const summary = e("summary");
 
-          const swatch = document.createElement("div");
-          swatch.className = "color-swatch";
-          swatch.style.backgroundColor = hex;
-          swatch.setAttribute("data-hex", hex);
-          swatch.title = "Click to copy " + hex;
+          const nameRow = e("div", { class: "nameRow" });
+          const nameText = e("div", { class: "nameText" }, name);
+          const hint = e("div", { class: "msg" }, "click to expand");
+          nameRow.appendChild(nameText);
+          nameRow.appendChild(hint);
 
-          const colorLabel = document.createElement("div");
-          colorLabel.className = "color-label";
-          colorLabel.textContent = label;
+          const rightNote = e("div", { class: "hexNote" }, hexes[0]);
 
-          swatch.addEventListener("click", () => {
-            navigator.clipboard.writeText(hex).then(() => {
-              swatch.classList.add("copied");
-              setTimeout(() => {
-                swatch.classList.remove("copied");
-              }, 1000);
+          summary.appendChild(nameRow);
+          summary.appendChild(rightNote);
+
+          const swatchRow = e("div", { class: "swatchRow" });
+
+          hexes.forEach((hex) => {
+            const sw = e("div", { class: "swatch" });
+            sw.style.backgroundColor = hex;
+            // choose readable text color based on brightness
+            const c = hex.replace("#", "");
+            const r = parseInt(c.substr(0, 2), 16);
+            const g = parseInt(c.substr(2, 2), 16);
+            const b = parseInt(c.substr(4, 2), 16);
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            sw.style.color = luminance > 170 ? "#000" : "#fff";
+            sw.textContent = hex;
+            sw.title = "click to copy";
+            sw.addEventListener("click", async function () {
+              try {
+                await navigator.clipboard.writeText(hex);
+                const prior = sw.textContent;
+                sw.textContent = "copied";
+                setTimeout(() => (sw.textContent = prior), 900);
+              } catch (e) {
+                // fallback
+                const inp = document.createElement("input");
+                document.body.appendChild(inp);
+                inp.value = hex;
+                inp.select();
+                document.execCommand("copy");
+                document.body.removeChild(inp);
+                const prior = sw.textContent;
+                sw.textContent = "copied";
+                setTimeout(() => (sw.textContent = prior), 900);
+              }
             });
+            swatchRow.appendChild(sw);
           });
 
-          colorGroup.appendChild(swatch);
-          colorGroup.appendChild(colorLabel);
-          colorsWrapper.appendChild(colorGroup);
+          details.appendChild(summary);
+          details.appendChild(swatchRow);
+          listRoot.appendChild(details);
         });
 
-        details.appendChild(colorsWrapper);
-        container.appendChild(details);
-      });
+        // star canvas
+        const canvas = document.getElementById("starCanvas");
+        const ctx = canvas.getContext("2d");
+        let w = 0;
+        let h = 0;
+        let stars = [];
 
-      document.body.appendChild(container);
+        function resize() {
+          const dpr = Math.max(1, window.devicePixelRatio || 1);
+          w = Math.ceil(window.innerWidth);
+          h = Math.ceil(window.innerHeight);
+          canvas.width = Math.ceil(w * dpr);
+          canvas.height = Math.ceil(h * dpr);
+          canvas.style.width = w + "px";
+          canvas.style.height = h + "px";
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          initStars();
+        }
+
+        function initStars() {
+          stars = [];
+          const count = Math.round((w * h) / 9000) + 120;
+          for (let i = 0; i < count; i++) {
+            stars.push({
+              x: Math.random() * w,
+              y: Math.random() * h,
+              r: Math.random() * 1.8 + 0.3,
+              alpha: Math.random() * 0.9 + 0.1,
+              tw: Math.random() * 0.02 + 0.001,
+              phase: Math.random() * Math.PI * 2,
+            });
+          }
+        }
+
+        let last = performance.now();
+        function frame(now) {
+          const dt = Math.min(60, now - last) / 1000;
+          last = now;
+          // clear
+          ctx.clearRect(0, 0, w, h);
+          // soft glow background nebula using radial gradients drawn via many circles
+          for (let i = 0; i < 4; i++) {
+            const gx = (i + 1) * 0.23 * w;
+            const gy = (i % 2) * 0.6 * h;
+            const rad = Math.max(w, h) * (0.4 + i * 0.08);
+            const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, rad);
+            g.addColorStop(0, "rgba(12,18,28,0.14)");
+            g.addColorStop(0.5, "rgba(6,12,20,0.08)");
+            g.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.rect(0, 0, w, h);
+            ctx.fill();
+          }
+
+          // stars
+          for (const s of stars) {
+            s.phase += s.tw * dt * 60;
+            const alpha = 0.5 + 0.5 * Math.sin(s.phase);
+            ctx.beginPath();
+            ctx.globalAlpha = s.alpha * alpha;
+            ctx.fillStyle = "white";
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          requestAnimationFrame(frame);
+        }
+
+        window.addEventListener("resize", resize);
+        resize();
+        requestAnimationFrame(frame);
+
+        // small keyboard shortcut to copy first color of the first set for demo
+        window.addEventListener("keydown", function (e) {
+          if (e.key === "c" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            navigator.clipboard &&
+              navigator.clipboard.writeText(colorSets[0][1]);
+          }
+        });
+      })();
     </script>
   </body>
 </html>
