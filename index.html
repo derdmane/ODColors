@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Color Presets Dropdown</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #121212;
+        color: #eee;
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+      }
+      details {
+        margin-bottom: 15px;
+        background: #222;
+        border-radius: 6px;
+        box-shadow: 0 0 6px #0008;
+        padding: 10px 15px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1.1em;
+        outline: none;
+      }
+      .color-group {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        margin-right: 15px;
+        margin-bottom: 12px;
+      }
+      .color-swatch {
+        width: 70px;
+        height: 70px;
+        border-radius: 6px;
+        border: 2px solid #444;
+        box-sizing: border-box;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+        transition: box-shadow 0.2s ease;
+      }
+      .color-swatch:hover {
+        box-shadow: 0 0 8px 2px #fff8;
+      }
+      .color-swatch::after {
+        content: attr(data-hex);
+        position: absolute;
+        bottom: 110%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 8px;
+        background: #333;
+        border-radius: 4px;
+        white-space: nowrap;
+        font-size: 0.85em;
+        color: #fff;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      .color-swatch:hover::after {
+        opacity: 0.95;
+      }
+      .color-swatch.copied::after {
+        content: "Copied!";
+        opacity: 0.95 !important;
+        background: #4caf50;
+        color: #fff;
+        font-weight: bold;
+      }
+      .color-label {
+        font-size: 0.9em;
+        color: #bbb;
+        text-align: center;
+        margin-top: 6px;
+        user-select: none;
+        width: 70px;
+        word-break: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Color Preset Groups</h1>
+
+    <script>
+      const fullPresets = [
+        /* Full presets array from previous message */
+        {
+          name: "ColorPresetDefault (Boot Up Basic)",
+          colors: {
+            PrimaryColor: "#808080",
+            SecondaryColor: "#BCBCBC",
+            TertiaryColor: "#BCBCBC",
+            EmissiveColor: "#00FFFD",
+          },
+        },
+        {
+          name: "ColorPreset01 (Relay Red)",
+          colors: {
+            PrimaryColor: "#FF0000",
+            SecondaryColor: "#680000",
+            TertiaryColor: "#680000",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset02 (Gravity Green)",
+          colors: {
+            PrimaryColor: "#00DD00",
+            SecondaryColor: "#006500",
+            TertiaryColor: "#006500",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset03 (Binary Blue)",
+          colors: {
+            PrimaryColor: "#0055FF",
+            SecondaryColor: "#002560",
+            TertiaryColor: "#002560",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset04 (Wattage White)",
+          colors: {
+            PrimaryColor: "#E8E8E8",
+            SecondaryColor: "#6F7889",
+            TertiaryColor: "#6F7889",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset05 (Yaw Yellow)",
+          colors: {
+            PrimaryColor: "#FFCE00",
+            SecondaryColor: "#BF7A00",
+            TertiaryColor: "#BF7A00",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset06 (Polarity Purple)",
+          colors: {
+            PrimaryColor: "#8800FF",
+            SecondaryColor: "#4100A7",
+            TertiaryColor: "#4200A7",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset07 (Optical Orange)",
+          colors: {
+            PrimaryColor: "#FF7F00",
+            SecondaryColor: "#8B3E00",
+            TertiaryColor: "#8B3E00",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset08 (Rust Runners)",
+          colors: {
+            PrimaryColor: "#E88D37",
+            SecondaryColor: "#65222A",
+            TertiaryColor: "#65222A",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset09 (Ceres Cobs)",
+          colors: {
+            PrimaryColor: "#468910",
+            SecondaryColor: "#FED836",
+            TertiaryColor: "#FED836",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset10 (Circuit Samurais)",
+          colors: {
+            PrimaryColor: "#1A9599",
+            SecondaryColor: "#EC4605",
+            TertiaryColor: "#EC4605",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset11 (Pixel Punks)",
+          colors: {
+            PrimaryColor: "#FE29E1",
+            SecondaryColor: "#FFDB13",
+            TertiaryColor: "#FFDB13",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset12 (Ironclad Predators)",
+          colors: {
+            PrimaryColor: "#E52C2F",
+            SecondaryColor: "#849099",
+            TertiaryColor: "#849099",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset13 (Excelsior)",
+          colors: {
+            PrimaryColor: "#3A2986",
+            SecondaryColor: "#6EEDFF",
+            TertiaryColor: "#6EEDFF",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset14 (Camo)",
+          colors: {
+            PrimaryColor: "#456D00",
+            SecondaryColor: "#868900",
+            TertiaryColor: "#868900",
+            EmissiveColor: "#00FFFD",
+          },
+        },
+        {
+          name: "ColorPreset15 (Flames)",
+          colors: {
+            PrimaryColor: "#ED1B1B",
+            SecondaryColor: "#FFD62C",
+            TertiaryColor: "#FFD62C",
+            EmissiveColor: "#00FFFD",
+          },
+        },
+        {
+          name: "ColorPreset16 (Tiger)",
+          colors: {
+            PrimaryColor: "#EF6018",
+            SecondaryColor: "#262424",
+            TertiaryColor: "#262424",
+            EmissiveColor: "#00FFFD",
+          },
+        },
+        {
+          name: "ColorPreset17 (Club Complete)",
+          colors: {
+            PrimaryColor: "#35CCF0",
+            SecondaryColor: "#0B8843",
+            TertiaryColor: "#0B8843",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset18 (Secret Corn)",
+          colors: {
+            PrimaryColor: "#F1B737",
+            SecondaryColor: "#3E824A",
+            TertiaryColor: "#3E824A",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPreset19 (Breakaway Color)",
+          colors: {
+            PrimaryColor: "#F82782",
+            SecondaryColor: "#FEBA31",
+            TertiaryColor: "#FEBA31",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPresetSunBurst (Sunny Day)",
+          colors: {
+            PrimaryColor: "#EDA63A",
+            SecondaryColor: "#E75A38",
+            TertiaryColor: "#E75A38",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPresetQuantumCleats (Fresh Turf)",
+          colors: {
+            PrimaryColor: "#508BE7",
+            SecondaryColor: "#89BC63",
+            TertiaryColor: "#89BC63",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPresetLightning",
+          colors: {
+            PrimaryColor: "#104552",
+            SecondaryColor: "#D6FC4F",
+            TertiaryColor: "#D6FC4F",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPresetSparkle",
+          colors: {
+            PrimaryColor: "#0A63AD",
+            SecondaryColor: "#D7E7AF",
+            TertiaryColor: "#D7E7AE",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPresetButter",
+          colors: {
+            PrimaryColor: "#FFF448",
+            SecondaryColor: "#B48604",
+            TertiaryColor: "#B48604",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+        {
+          name: "ColorPresetCircuit",
+          colors: {
+            PrimaryColor: "#6758C2",
+            SecondaryColor: "#AAA9DE",
+            TertiaryColor: "#AAA9DE",
+            EmissiveColor: "#00FFFE",
+          },
+        },
+      ];
+
+      const container = document.createElement("div");
+
+      fullPresets.forEach((preset) => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = preset.name;
+        details.appendChild(summary);
+
+        const colorsWrapper = document.createElement("div");
+        colorsWrapper.style.display = "flex";
+        colorsWrapper.style.flexWrap = "wrap";
+        colorsWrapper.style.marginTop = "10px";
+
+        Object.entries(preset.colors).forEach(([label, hex]) => {
+          const colorGroup = document.createElement("div");
+          colorGroup.className = "color-group";
+
+          const swatch = document.createElement("div");
+          swatch.className = "color-swatch";
+          swatch.style.backgroundColor = hex;
+          swatch.setAttribute("data-hex", hex);
+          swatch.title = "Click to copy " + hex;
+
+          const colorLabel = document.createElement("div");
+          colorLabel.className = "color-label";
+          colorLabel.textContent = label;
+
+          swatch.addEventListener("click", () => {
+            navigator.clipboard.writeText(hex).then(() => {
+              swatch.classList.add("copied");
+              setTimeout(() => {
+                swatch.classList.remove("copied");
+              }, 1000);
+            });
+          });
+
+          colorGroup.appendChild(swatch);
+          colorGroup.appendChild(colorLabel);
+          colorsWrapper.appendChild(colorGroup);
+        });
+
+        details.appendChild(colorsWrapper);
+        container.appendChild(details);
+      });
+
+      document.body.appendChild(container);
+    </script>
+  </body>
+</html>
