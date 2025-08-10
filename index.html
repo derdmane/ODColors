@@ -1,312 +1,237 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>OD Colors</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        font-family: Inter, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
-        color: #ededed;
-        background: #000;
-        overflow-x: hidden;
-      }
-      canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        display: block;
-      }
-      .page,
-      .container {
-        z-index: 2;
-        position: relative;
-      }
-      .page {
-        min-height: 100%;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 48px;
-        box-sizing: border-box;
-      }
-      .container {
-        width: 960px;
-        max-width: calc(100% - 64px);
-        background: rgba(0, 0, 0, 0.4);
-        border-radius: 16px;
-        padding: 20px;
-        box-sizing: border-box;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-      }
-      h1 {
-        margin: 0 0 12px;
-        font-size: 22px;
-        color: #f6f6f6;
-      }
-      p {
-        margin: 0 0 18px;
-        color: #cfd6dd;
-        font-size: 14px;
-      }
-      details {
-        margin: 8px 0;
-        background: rgba(255, 255, 255, 0.03);
-        padding: 12px;
-        border-radius: 10px;
-      }
-      summary {
-        list-style: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .nameRow {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        flex: 1;
-      }
-      .nameText {
-        font-weight: 600;
-        font-size: 16px;
-      }
-      .hexNote {
-        font-size: 12px;
-        color: #d0d7df;
-      }
-      .swatchRow {
-        display: flex;
-        gap: 10px;
-        margin-top: 12px;
-        flex-wrap: wrap;
-      }
-      .swatch {
-        width: 84px;
-        height: 54px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        user-select: none;
-        font-size: 12px;
-        font-weight: 700;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-      }
-      .footer {
-        margin-top: 16px;
-        font-size: 12px;
-        color: #bfc8cf;
-        text-align: right;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="starCanvas"></canvas>
-    <div class="page">
-      <div class="container">
-        <h1>Orion Drift Colors</h1>
-        <p>click any color to copy that hex code to the clipboard.</p>
-        <div id="listRoot"></div>
-      </div>
-    </div>
+<head>
+<meta charset="utf-8">
+<title>Color Roster</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{
+    height:100%;
+    margin:0;
+    font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    color:#ededed;
+    background:#000;
+    overflow-x:hidden;
+  }
+  canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    display:block;
+  }
+  .page, .container{
+    z-index:2;
+    position:relative;
+  }
+  .page{
+    min-height:100%;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:48px;
+    box-sizing:border-box;
+  }
+  .container{
+    width:960px;
+    max-width:calc(100% - 64px);
+    background:rgba(0,0,0,0.4);
+    border-radius:16px;
+    padding:20px;
+    box-sizing:border-box;
+    backdrop-filter:blur(8px);
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+  }
+  h1{margin:0 0 12px;font-size:22px;color:#f6f6f6}
+  p{margin:0 0 18px;color:#cfd6dd;font-size:14px}
+  details{margin:8px 0;background:rgba(255,255,255,0.03);padding:12px;border-radius:10px}
+  summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .nameRow{display:flex;gap:12px;align-items:center;flex:1}
+  .nameText{font-weight:600;font-size:16px}
+  .hexNote{font-size:12px;color:#d0d7df}
+  .swatchRow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .swatch{width:84px;height:54px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;font-size:12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+  .footer{margin-top:16px;font-size:12px;color:#bfc8cf;text-align:right}
+</style>
+</head>
+<body>
+<canvas id="starCanvas"></canvas>
+<div class="page">
+  <div class="container">
+    <h1>Color roster</h1>
+    <p>Click any color preview to copy that hex code to clipboard. The items expand to show each color set.</p>
+    <div id="listRoot"></div>
+    <div class="footer">made with care</div>
+  </div>
+</div>
 
-    <script>
-      (function () {
-        const colorSets = [
-          ["Boot Up Basic", "#808080", "#BCBCBC", "#BCBCBC", "#00FFFD"],
-          ["Relay Red", "#FF0000", "#680000", "#680000", "#00FFFE"],
-          ["Gravity Green", "#00DD00", "#006500", "#006500", "#00FFFE"],
-          ["Binary Blue", "#0055FF", "#002560", "#002560", "#00FFFE"],
-          ["Wattage White", "#E8E8E8", "#6F7889", "#6F7889", "#00FFFE"],
-          ["Yaw Yellow", "#FFCE00", "#BF7A00", "#BF7A00", "#00FFFE"],
-          ["Polarity Purple", "#8800FF", "#4100A7", "#4200A7", "#00FFFE"],
-          ["Optical Orange", "#FF7F00", "#8B3E00", "#8B3E00", "#00FFFE"],
-          ["Rust Runners", "#E88D37", "#65222A", "#65222A", "#00FFFE"],
-          ["Ceres Cobs", "#468910", "#FED836", "#FED836", "#00FFFE"],
-          ["Circuit Samurais", "#1A9599", "#EC4605", "#EC4605", "#00FFFE"],
-          ["Pixel Punks", "#FE29E1", "#FFDB13", "#FFDB13", "#00FFFE"],
-          ["Ironclad Predators", "#E52C2F", "#849099", "#849099", "#00FFFE"],
-          ["Excelsior", "#3A2986", "#6EEDFF", "#6EEDFF", "#00FFFE"],
-          ["Camo", "#456D00", "#868900", "#868900", "#00FFFD"],
-          ["Flames", "#ED1B1B", "#FFD62C", "#FFD62C", "#00FFFD"],
-          ["Tiger", "#EF6018", "#262424", "#262424", "#00FFFD"],
-          ["Club Complete", "#35CCF0", "#0B8843", "#0B8843", "#00FFFE"],
-          ["Secret Corn", "#F1B737", "#3E824A", "#3E824A", "#00FFFE"],
-          ["Breakaway Color", "#F82782", "#FEBA31", "#FEBA31", "#00FFFE"],
-          ["Sunny Day", "#EDA63A", "#E75A38", "#E75A38", "#00FFFE"],
-          ["Fresh Turf", "#508BE7", "#89BC63", "#89BC63", "#00FFFE"],
-          ["Lightning", "#104552", "#D6FC4F", "#D6FC4F", "#00FFFE"],
-          ["Sparkle", "#0A63AD", "#D7E7AF", "#D7E7AE", "#00FFFE"],
-          ["Butter", "#FFF448", "#B48604", "#B48604", "#00FFFE"],
-          ["Circuit", "#6758C2", "#AAA9DE", "#AAA9DE", "#00FFFE"],
-          ["Hush", "#7D1C9A", "#5FB1FE", "#5FB1FE", "#00FFFE"],
-          ["Liquid Smoke", "#141416", "#5400F9", "#5400F9", "#00FFFE"],
-          ["Polka Dot", "#2D98CD", "#D33124", "#D33124", "#00FFFE"],
-          ["Samurai", "#313131", "#272D48", "#272D48", "#00FFFE"],
-          ["Six Foot Turkey", "#35B83F", "#A2262F", "#A2262F", "#00FFFE"],
-          ["Thunderborn", "#0E4945", "#18D1D7", "#18D1D7", "#00FFFE"],
-          ["Tri Hard", "#B7D619", "#7014F9", "#7014F9", "#00FFFE"],
-          ["Crownlink", "#4E1F49", "#EF1E6C", "#EF1E6C", "#00FFFE"],
-        ];
-        const listRoot = document.getElementById("listRoot");
-        function e(tag, props, children) {
-          const el = document.createElement(tag);
-          if (props) {
-            for (const k in props) {
-              if (k === "style") Object.assign(el.style, props.style);
-              else if (k === "on")
-                for (const ev in props.on)
-                  el.addEventListener(ev, props.on[ev]);
-              else el.setAttribute(k, props[k]);
-            }
-          }
-          if (children) {
-            if (Array.isArray(children))
-              children.forEach((c) =>
-                el.appendChild(
-                  typeof c === "string" ? document.createTextNode(c) : c
-                )
-              );
-            else
-              el.appendChild(
-                typeof children === "string"
-                  ? document.createTextNode(children)
-                  : children
-              );
-          }
-          return el;
-        }
-        colorSets.forEach((set) => {
-          const name = set[0],
-            hexes = set.slice(1);
-          const details = e("details");
-          const summary = e("summary");
-          const nameRow = e("div", { class: "nameRow" });
-          nameRow.appendChild(e("div", { class: "nameText" }, name));
-          const rightNote = e("div", { class: "hexNote" }, hexes[0]);
-          summary.appendChild(nameRow);
-          summary.appendChild(rightNote);
-          const swatchRow = e("div", { class: "swatchRow" });
-          hexes.forEach((hex) => {
-            const sw = e("div", { class: "swatch" });
-            sw.style.backgroundColor = hex;
-            const c = hex.replace("#", "");
-            const r = parseInt(c.substr(0, 2), 16),
-              g = parseInt(c.substr(2, 2), 16),
-              b = parseInt(c.substr(4, 2), 16);
-            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-            sw.style.color = lum > 170 ? "#000" : "#fff";
-            sw.textContent = hex;
-            sw.title = "click to copy";
-            sw.addEventListener("click", async () => {
-              await navigator.clipboard.writeText(hex);
-              const prior = sw.textContent;
-              sw.textContent = "copied";
-              setTimeout(() => (sw.textContent = prior), 900);
-            });
-            swatchRow.appendChild(sw);
-          });
-          details.appendChild(summary);
-          details.appendChild(swatchRow);
-          listRoot.appendChild(details);
+<script>
+(function(){
+  const colorSets = [
+      ["Boot Up Basic", "#808080", "#BCBCBC", "#BCBCBC", "#00FFFD"],
+      ["Relay Red", "#FF0000", "#680000", "#680000", "#00FFFE"],
+      ["Gravity Green", "#00DD00", "#006500", "#006500", "#00FFFE"],
+      ["Binary Blue", "#0055FF", "#002560", "#002560", "#00FFFE"],
+      ["Wattage White", "#E8E8E8", "#6F7889", "#6F7889", "#00FFFE"],
+      ["Yaw Yellow", "#FFCE00", "#BF7A00", "#BF7A00", "#00FFFE"],
+      ["Polarity Purple", "#8800FF", "#4100A7", "#4200A7", "#00FFFE"],
+      ["Optical Orange", "#FF7F00", "#8B3E00", "#8B3E00", "#00FFFE"],
+      ["Rust Runners", "#E88D37", "#65222A", "#65222A", "#00FFFE"],
+      ["Ceres Cobs", "#468910", "#FED836", "#FED836", "#00FFFE"],
+      ["Circuit Samurais", "#1A9599", "#EC4605", "#EC4605", "#00FFFE"],
+      ["Pixel Punks", "#FE29E1", "#FFDB13", "#FFDB13", "#00FFFE"],
+      ["Ironclad Predators", "#E52C2F", "#849099", "#849099", "#00FFFE"],
+      ["Excelsior", "#3A2986", "#6EEDFF", "#6EEDFF", "#00FFFE"],
+      ["Camo", "#456D00", "#868900", "#868900", "#00FFFD"],
+      ["Flames", "#ED1B1B", "#FFD62C", "#FFD62C", "#00FFFD"],
+      ["Tiger", "#EF6018", "#262424", "#262424", "#00FFFD"],
+      ["Club Complete", "#35CCF0", "#0B8843", "#0B8843", "#00FFFE"],
+      ["Secret Corn", "#F1B737", "#3E824A", "#3E824A", "#00FFFE"],
+      ["Breakaway Color", "#F82782", "#FEBA31", "#FEBA31", "#00FFFE"],
+      ["Sunny Day", "#EDA63A", "#E75A38", "#E75A38", "#00FFFE"],
+      ["Fresh Turf", "#508BE7", "#89BC63", "#89BC63", "#00FFFE"],
+      ["Lightning", "#104552", "#D6FC4F", "#D6FC4F", "#00FFFE"],
+      ["Sparkle", "#0A63AD", "#D7E7AF", "#D7E7AE", "#00FFFE"],
+      ["Butter", "#FFF448", "#B48604", "#B48604", "#00FFFE"],
+      ["Circuit", "#6758C2", "#AAA9DE", "#AAA9DE", "#00FFFE"],
+      ["Hush", "#7D1C9A", "#5FB1FE", "#5FB1FE", "#00FFFE"],
+      ["Liquid Smoke", "#141416", "#5400F9", "#5400F9", "#00FFFE"],
+      ["Polka Dot", "#2D98CD", "#D33124", "#D33124", "#00FFFE"],
+      ["Samurai", "#313131", "#272D48", "#272D48", "#00FFFE"],
+      ["Six Foot Turkey", "#35B83F", "#A2262F", "#A2262F", "#00FFFE"],
+      ["Thunderborn", "#0E4945", "#18D1D7", "#18D1D7", "#00FFFE"],
+      ["Tri Hard", "#B7D619", "#7014F9", "#7014F9", "#00FFFE"],
+      ["Crownlink", "#4E1F49", "#EF1E6C", "#EF1E6C", "#00FFFE"],
+    ];
+  const listRoot=document.getElementById("listRoot");
+  function e(tag,props,children){
+    const el=document.createElement(tag);
+    if(props){
+      for(const k in props){
+        if(k==="style") Object.assign(el.style,props.style);
+        else if(k==="on") for(const ev in props.on) el.addEventListener(ev,props.on[ev]);
+        else el.setAttribute(k,props[k]);
+      }
+    }
+    if(children){
+      if(Array.isArray(children)) children.forEach(c=>el.appendChild(typeof c==="string"?document.createTextNode(c):c));
+      else el.appendChild(typeof children==="string"?document.createTextNode(children):children);
+    }
+    return el;
+  }
+  colorSets.forEach(set=>{
+    const name=set[0], hexes=set.slice(1);
+    const details=e("details",{open:""}); // all open by default
+    const summary=e("summary");
+    const nameRow=e("div",{class:"nameRow"});
+    nameRow.appendChild(e("div",{class:"nameText"},name));
+    const rightNote=e("div",{class:"hexNote"},hexes[0]);
+    summary.appendChild(nameRow);
+    summary.appendChild(rightNote);
+    const swatchRow=e("div",{class:"swatchRow"});
+    hexes.forEach(hex=>{
+      const sw=e("div",{class:"swatch"});
+      sw.style.backgroundColor=hex;
+      const c=hex.replace("#","");
+      const r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
+      const lum=0.299*r+0.587*g+0.114*b;
+      sw.style.color=lum>170?"#000":"#fff";
+      sw.textContent=hex;
+      sw.title="click to copy";
+      sw.addEventListener("click",async()=>{
+        await navigator.clipboard.writeText(hex);
+        const prior=sw.textContent;
+        sw.textContent="copied";
+        setTimeout(()=>sw.textContent=prior,900);
+      });
+      swatchRow.appendChild(sw);
+    });
+    details.appendChild(summary);
+    details.appendChild(swatchRow);
+    listRoot.appendChild(details);
+  });
+
+  // mesmerizing background
+  const canvas=document.getElementById("starCanvas");
+  const ctx=canvas.getContext("2d");
+  let w,h,stars=[],nebula=[];
+  function resize(){
+    w=window.innerWidth;h=window.innerHeight;
+    canvas.width=w;canvas.height=h;
+    initStars();
+    initNebula();
+  }
+  function initStars(){
+    stars=[];
+    const layers=3;
+    for(let l=0;l<layers;l++){
+      const count=100+ l*60;
+      for(let i=0;i<count;i++){
+        stars.push({
+          x:Math.random()*w,
+          y:Math.random()*h,
+          r:Math.random()*1.5+(l*0.3),
+          alpha:Math.random()*0.8+0.2,
+          tw:Math.random()*0.02,
+          phase:Math.random()*Math.PI*2,
+          speed:0.05+l*0.03
         });
-
-        // mesmerizing background
-        const canvas = document.getElementById("starCanvas");
-        const ctx = canvas.getContext("2d");
-        let w,
-          h,
-          stars = [],
-          nebula = [];
-        function resize() {
-          w = window.innerWidth;
-          h = window.innerHeight;
-          canvas.width = w;
-          canvas.height = h;
-          initStars();
-          initNebula();
-        }
-        function initStars() {
-          stars = [];
-          const layers = 3;
-          for (let l = 0; l < layers; l++) {
-            const count = 100 + l * 60;
-            for (let i = 0; i < count; i++) {
-              stars.push({
-                x: Math.random() * w,
-                y: Math.random() * h,
-                r: Math.random() * 1.5 + l * 0.3,
-                alpha: Math.random() * 0.8 + 0.2,
-                tw: Math.random() * 0.02,
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.05 + l * 0.03,
-              });
-            }
-          }
-        }
-        function initNebula() {
-          nebula = [];
-          const colors = ["#5500ff", "#ff0077", "#00ffaa", "#ff6600"];
-          for (let i = 0; i < 5; i++) {
-            nebula.push({
-              x: Math.random() * w,
-              y: Math.random() * h,
-              r: 300 + Math.random() * 500,
-              color: colors[Math.floor(Math.random() * colors.length)],
-              dx: (Math.random() - 0.5) * 0.2,
-              dy: (Math.random() - 0.5) * 0.2,
-            });
-          }
-        }
-        function frame() {
-          ctx.clearRect(0, 0, w, h);
-          // nebula glow
-          nebula.forEach((n) => {
-            const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-            g.addColorStop(0, n.color + "22");
-            g.addColorStop(0.6, n.color + "08");
-            g.addColorStop(1, "transparent");
-            ctx.fillStyle = g;
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-            ctx.fill();
-            n.x += n.dx;
-            n.y += n.dy;
-            if (n.x < -n.r) n.x = w + n.r;
-            if (n.x > w + n.r) n.x = -n.r;
-            if (n.y < -n.r) n.y = h + n.r;
-            if (n.y > h + n.r) n.y = -n.r;
-          });
-          // stars
-          stars.forEach((s) => {
-            s.phase += s.tw;
-            const alpha = s.alpha * (0.5 + 0.5 * Math.sin(s.phase * 6));
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = "white";
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-            s.x -= s.speed;
-            if (s.x < 0) s.x = w;
-          });
-          requestAnimationFrame(frame);
-        }
-        window.addEventListener("resize", resize);
-        resize();
-        frame();
-      })();
-    </script>
-  </body>
+      }
+    }
+  }
+  function initNebula(){
+    nebula=[];
+    const colors=["#5500ff","#ff0077","#00ffaa","#ff6600"];
+    for(let i=0;i<5;i++){
+      nebula.push({
+        x:Math.random()*w,
+        y:Math.random()*h,
+        r:300+Math.random()*500,
+        color:colors[Math.floor(Math.random()*colors.length)],
+        dx:(Math.random()-0.5)*0.2,
+        dy:(Math.random()-0.5)*0.2
+      });
+    }
+  }
+  function frame(){
+    ctx.clearRect(0,0,w,h);
+    // nebula glow
+    nebula.forEach(n=>{
+      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+      g.addColorStop(0,n.color+"22");
+      g.addColorStop(0.6,n.color+"08");
+      g.addColorStop(1,"transparent");
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fill();
+      n.x+=n.dx;n.y+=n.dy;
+      if(n.x< -n.r) n.x=w+n.r;
+      if(n.x>w+n.r) n.x=-n.r;
+      if(n.y< -n.r) n.y=h+n.r;
+      if(n.y>h+n.r) n.y=-n.r;
+    });
+    // stars
+    stars.forEach(s=>{
+      s.phase+=s.tw;
+      const alpha=s.alpha*(0.5+0.5*Math.sin(s.phase*6));
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle="white";
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+      s.x-=s.speed;
+      if(s.x<0) s.x=w;
+    });
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener("resize",resize);
+  resize();
+  frame();
+})();
+</script>
+</body>
 </html>
